@@ -1,47 +1,63 @@
-# **Cemu - Wii U emulator**
+# ☕ Cemu Latte [AX] — Deterministic Wii U Emulator Fork
 
-[![Build Process](https://github.com/cemu-project/Cemu/actions/workflows/build.yml/badge.svg)](https://github.com/cemu-project/Cemu/actions/workflows/build.yml)
-[![Discord](https://img.shields.io/discord/286429969104764928?label=Cemu&logo=discord&logoColor=FFFFFF)](https://discord.gg/5psYsup)
+A deterministic fork of [Cemu](https://github.com/cemu-project/Cemu) engineered by **The Silicon Preservation Society** to extend the life of proven PC hardware and keep it out of landfills.
 
-This is the code repository of Cemu, a Wii U emulator that is able to run most Wii U games and homebrew in a playable state.
-It's written in C/C++ and is being actively developed with new features and fixes.
+Named after **Latte**—the Wii U's AMD GPU—**Cemu Latte `[AX]`** offers two focused editions:
+1. **Windows 10 Baseline Edition:** Compiled with Profile-Guided Optimization (PGO), Coffee Lake instruction targeting, and Vulkan 1.4 support for clean, reliable desktop play.
+2. **Batocera Linux (`Piccolo [AX]`) Edition:** Integrates [`ax-sdk`](https://github.com) for locked `2:3:1` physical core isolation, Intel iGPU video/deinterlace offloading, `5.50 GB` VRAM safeguards, and crackle-free USB DAC audio.
 
-Cemu is currently only available for 64-bit Windows, Linux & macOS devices.
+---
 
-### Links:
- - [Open Source Announcement](https://www.reddit.com/r/cemu/comments/wwa22c/cemu_20_announcement_linux_builds_opensource_and/)
- - [Official Website](https://cemu.info)
- - [Compatibility List/Wiki](https://wiki.cemu.info/wiki/Main_Page)
- - [Official Subreddit](https://reddit.com/r/Cemu)
- - [Official Discord](https://discord.gg/5psYsup)
- - [Setup Guide](https://cemu.cfw.guide)
+## 🔗 The Silicon Preservation Society — Official Repository Network
 
-#### Other relevant repositories:
- - [Cemu-Language](https://github.com/cemu-project/Cemu-Language)
- - [Cemu's Community Graphic Packs](https://github.com/cemu-project/cemu_graphic_packs)
+| Project | Role | Primary Repository | Mirror / Upstream |
+| :--- | :--- | :--- | :--- |
+| **Piccolo `[AX]`** | `< 300 MB` Bare-Metal Linux Console OS | [GitHub (`Piccolo-AX`)](https://github.com) | Base: [Batocera Linux](https://github.com) |
+| **`ax-sdk`** | Shared C++20 Runtime Core (`libax_core`) | [GitHub (`ax-sdk`)](https://github.com) | Dependency-Free Core |
+| **Eden Espresso Wave `[AX]`** | Nintendo Switch (Windows 10 Bridge + Linux) | [Eden Forgejo](https://eden-emu.dev) | Mirror: [GitHub](https://github.com) · Upstream: [Eden](https://eden-emu.dev) |
+| **Cemu Latte `[AX]`** | Nintendo Wii U (Win10 PGO + Batocera `[AX]`) | [GitHub (`Cemu-Latte-AX`)](https://github.com) | Upstream: [Cemu](https://github.com/cemu-project/Cemu) |
 
-## Download
+---
 
-You can download the latest Cemu releases for Windows, Linux and Mac from the [GitHub Releases](https://github.com/cemu-project/Cemu/releases/). For Linux you can also find Cemu on [Flathub](https://flathub.org/apps/info.cemu.Cemu).
+## 🎯 Key `[AX]` Features
 
-On Windows, Cemu is available both as an installer and in a portable format, where no installation is required besides extracting it in a safe place.
+* **Flat Frametimes on Classic Silicon:** PGO-trained PowerPC JIT codegen paired with dedicated core isolation on [`Piccolo [AX]`](https://github.com).
+* **Intel iGPU Offloading:** Routes H.264 cutscene decoding and video processing onto Intel UHD Graphics so your discrete GPU stays focused on 3D rendering.
+* **VRAM Protection (`5.50 GB` Shield):** Prevents out-of-memory stutters and driver crashes on 6 GB cards like the GTX 980 Ti and GTX 1060.
+* **Bit-Perfect Low-Latency Audio:** Zero-underrun USB DAC audio pipeline powered by [`ax-sdk`](https://github.com).
 
-The native macOS build is currently purely experimental and should not be considered stable or ready for issue-free gameplay. There are also known issues with degraded performance due to the use of MoltenVK and Rosetta for ARM Macs. We appreciate your patience while we improve Cemu for macOS.
+---
 
-Pre-2.0 releases can be found on Cemu's [changelog page](https://cemu.info/changelog.html).
+## 🌐 Upstream Cemu Ecosystem & Community Links
 
-## Build Instructions
+Cemu is a Wii U emulator written in C/C++ that is able to run most Wii U games and homebrew in a playable state. Contains no proprietary Nintendo firmware, keys, or games.
 
-To compile Cemu yourself on Windows, Linux or macOS, view [BUILD.md](/BUILD.md).
+### Official Cemu Links
+* [Upstream Cemu Repository](https://github.com/cemu-project/Cemu)
+* [Official Website](https://cemu.info)
+* [Compatibility List / Wiki](https://wiki.cemu.info/wiki/Main_Page)
+* [Setup Guide](https://cemu.cfw.guide)
+* [Open Source Announcement](https://www.reddit.com/r/cemu/comments/wwa22c/cemu_20_announcement_linux_builds_opensource_and/)
+* [Official Subreddit](https://reddit.com/r/Cemu)
+* [Official Discord](https://discord.gg/5psYsup)
 
-## Issues
+### Related Upstream Repositories
+* [Cemu-Language (UI Translations)](https://github.com/cemu-project/Cemu-Language)
+* [Cemu's Community Graphic Packs](https://github.com/cemu-project/cemu_graphic_packs)
 
-Issues with the emulator should be filed using [GitHub Issues](https://github.com/cemu-project/Cemu/issues).  
-The old bug tracker can be found at [bugs.cemu.info](https://bugs.cemu.info) and still contains relevant issues and feature suggestions.
+---
 
-## Contributing
+## 🛠️ Build Instructions & Issues
 
-If you want to contribute you can take a look at our [contribution guidelines](/CONTRIBUTING.md).
+* **Building from Source:** To compile the upstream Cemu baseline on Windows, Linux, or macOS, view [BUILD.md](/BUILD.md).
+* **Upstream Releases:** Standard official builds can be downloaded from [Upstream Cemu GitHub Releases](https://github.com/cemu-project/Cemu/releases/) or [Flathub](https://flathub.org/apps/info.cemu.Cemu).
+* **Reporting Issues:**
+  * Issues specific to **Cemu Latte `[AX]`**, PGO profiles, or `ax-sdk` integration should be filed in this fork's [Issues](https://github.com/issues) tab.
+  * General upstream emulation issues can be checked against [Upstream Cemu GitHub Issues](https://github.com/cemu-project/Cemu/issues) and the legacy [bugs.cemu.info](https://bugs.cemu.info) tracker.
 
-## License
-Cemu is licensed under [Mozilla Public License 2.0](/LICENSE.txt). Exempt from this are all files in the dependencies directory for which the licenses of the original code apply as well as some individual files in the src folder, as specified in those file headers respectively.
+---
+
+## 🤝 Contributing & License
+
+* **Contributing:** See [CONTRIBUTING.md](/CONTRIBUTING.md) for upstream code style and contribution guidelines.
+* **License:** Cemu is licensed under [Mozilla Public License 2.0](/LICENSE.txt). Exempt from this are all files in the `dependencies` directory for which the licenses of the original code apply, as well as individual files in the `src` folder as specified in those file headers respectively.
