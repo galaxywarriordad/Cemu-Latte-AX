@@ -250,3 +250,19 @@ if(ENABLE_AX_SDK AND TARGET ax::core)
 	target_link_libraries(CemuBin PRIVATE ax::core)
 	target_link_libraries(CemuCommon PUBLIC ax::core)
 endif()
+# =======================================================================
+# AX-SDK Integration (Cemu Latte [AX] Silicon & Audio Isolation)
+# =======================================================================
+if(ENABLE_AX_SDK AND TARGET ax::core)
+    if(TARGET CemuCommon)
+        target_link_libraries(CemuCommon PUBLIC ax::core)
+        target_compile_definitions(CemuCommon PUBLIC CEMU_ENABLE_AX_SDK=1)
+    endif()
+
+    if(TARGET CemuBin)
+        target_link_libraries(CemuBin PRIVATE ax::core)
+        target_compile_definitions(CemuBin PRIVATE CEMU_ENABLE_AX_SDK=1)
+    endif()
+
+    message(STATUS "[AX-SDK] Linked ax::core into CemuCommon and CemuBin (CEMU_ENABLE_AX_SDK=1).")
+endif()
