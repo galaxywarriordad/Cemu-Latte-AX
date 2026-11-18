@@ -245,3 +245,8 @@ endif()
 if (BSD)
 	target_link_libraries(CemuBin PRIVATE execinfo SPIRV-Tools SPIRV-Tools-opt)
 endif()
+
+if(ENABLE_AX_SDK AND TARGET ax::core)
+	target_link_libraries(CemuBin PRIVATE ax::core)
+	target_link_libraries(CemuCommon PUBLIC ax::core)
+endif()
