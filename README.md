@@ -4,7 +4,7 @@ A deterministic fork of [Cemu](https://github.com/cemu-project/Cemu) engineered 
 
 Named after **Latte**—the Wii U's AMD GPU—**Cemu Latte `[AX]`** offers two focused editions:
 1. **Windows 10 Baseline Edition:** Compiled with Profile-Guided Optimization (PGO), Coffee Lake instruction targeting, and Vulkan 1.4 support for clean, reliable desktop play.
-2. **Batocera Linux (`Piccolo [AX]`) Edition:** Integrates [`ax-sdk`](https://github.com) for locked `2:3:1` physical core isolation, Intel iGPU video/deinterlace offloading, `5.50 GB` VRAM safeguards, and crackle-free USB DAC audio.
+2. **Batocera Linux (`Piccolo [AX]`) Edition:** Integrates [`ax-sdk`](https://github.com/galaxywarriordad/ax-sdk) for locked `2:3:1` physical core isolation, Intel iGPU video/deinterlace offloading, `5.50 GB` VRAM safeguards, and crackle-free USB DAC audio.
 
 ---
 
@@ -12,19 +12,19 @@ Named after **Latte**—the Wii U's AMD GPU—**Cemu Latte `[AX]`** offers two f
 
 | Project | Role | Primary Repository | Mirror / Upstream |
 | :--- | :--- | :--- | :--- |
-| **Piccolo `[AX]`** | `< 300 MB` Bare-Metal Linux Console OS | [GitHub (`Piccolo-AX`)](https://github.com) | Base: [Batocera Linux](https://github.com) |
-| **`ax-sdk`** | Shared C++20 Runtime Core (`libax_core`) | [GitHub (`ax-sdk`)](https://github.com) | Dependency-Free Core |
-| **Eden Espresso Wave `[AX]`** | Nintendo Switch (Windows 10 Bridge + Linux) | [Eden Forgejo](https://eden-emu.dev) | Mirror: [GitHub](https://github.com) · Upstream: [Eden](https://eden-emu.dev) |
-| **Cemu Latte `[AX]`** | Nintendo Wii U (Win10 PGO + Batocera `[AX]`) | [GitHub (`Cemu-Latte-AX`)](https://github.com) | Upstream: [Cemu](https://github.com/cemu-project/Cemu) |
+| **Piccolo `[AX]`** | `< 300 MB` Bare-Metal Linux Console OS | [GitHub (`Piccolo-AX`)](https://github.com/galaxywarriordad/Piccolo-AX) | Base: [Batocera Linux](https://github.com/batocera-linux/batocera.linux) |
+| **`ax-sdk`** | Shared C++20 Runtime Core (`libax_core`) | [GitHub (`ax-sdk`)](https://github.com/galaxywarriordad/ax-sdk) | Dependency-Free Core |
+| **Eden Espresso Wave `[AX]`** | Nintendo Switch (Windows 10 Bridge + Linux) | [Eden Forgejo](https://git.eden-emu.dev/galaxywarriordad/Eden-Espresso-Wave-AX.git) | Mirror: [GitHub](https://github.com/galaxywarriordad/Eden-Espresso-Wave-AX) · Upstream: [Eden](https://git.eden-emu.dev/eden-emu/eden/) |
+| **Cemu Latte `[AX]`** | Nintendo Wii U (Win10 PGO + Batocera `[AX]`) | [GitHub (`Cemu-Latte-AX`)](https://github.com/galaxywarriordad/Cemu-Latte-AX) | Upstream: [Cemu](https://github.com/cemu-project/Cemu) |
 
 ---
 
 ## 🎯 Key `[AX]` Features
 
-* **Flat Frametimes on Classic Silicon:** PGO-trained PowerPC JIT codegen paired with dedicated core isolation on [`Piccolo [AX]`](https://github.com).
+* **Flat Frametimes on Classic Silicon:** PGO-trained PowerPC JIT codegen paired with dedicated core isolation on [`Piccolo [AX]`](https://github.com/galaxywarriordad/Piccolo-AX).
 * **Intel iGPU Offloading:** Routes H.264 cutscene decoding and video processing onto Intel UHD Graphics so your discrete GPU stays focused on 3D rendering.
 * **VRAM Protection (`5.50 GB` Shield):** Prevents out-of-memory stutters and driver crashes on 6 GB cards like the GTX 980 Ti and GTX 1060.
-* **Bit-Perfect Low-Latency Audio:** Zero-underrun USB DAC audio pipeline powered by [`ax-sdk`](https://github.com).
+* **Bit-Perfect Low-Latency Audio:** Zero-underrun USB DAC audio pipeline powered by [`ax-sdk`](https://github.com/galaxywarriordad/ax-sdk).
 
 ---
 
@@ -52,7 +52,7 @@ Cemu is a Wii U emulator written in C/C++ that is able to run most Wii U games a
 * **Building from Source:** To compile the upstream Cemu baseline on Windows, Linux, or macOS, view [BUILD.md](/BUILD.md).
 * **Upstream Releases:** Standard official builds can be downloaded from [Upstream Cemu GitHub Releases](https://github.com/cemu-project/Cemu/releases/) or [Flathub](https://flathub.org/apps/info.cemu.Cemu).
 * **Reporting Issues:**
-  * Issues specific to **Cemu Latte `[AX]`**, PGO profiles, or `ax-sdk` integration should be filed in this fork's [Issues](https://github.com/issues) tab.
+  * Issues specific to **Cemu Latte `[AX]`**, PGO profiles, or `ax-sdk` integration should be filed in this fork's [Issues](https://github.com/galaxywarriordad/Cemu-Latte-AX/issues) tab.
   * General upstream emulation issues can be checked against [Upstream Cemu GitHub Issues](https://github.com/cemu-project/Cemu/issues) and the legacy [bugs.cemu.info](https://bugs.cemu.info) tracker.
 
 ---
