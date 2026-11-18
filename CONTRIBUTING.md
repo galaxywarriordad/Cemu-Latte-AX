@@ -1,20 +1,35 @@
-# Contributing
+# 🤝 Contributing to Cemu Latte [AX]
 
-Pull requests are welcome. For easier coordination you can visit the developer discussion channel on [Discord](https://discord.gg/5psYsup).
-Before submitting a pull request, please read and follow our code style guidelines listed in [CODING_STYLE.md](/CODING_STYLE.md).
+Thank you for your interest in **Cemu Latte `[AX]`**! Because this fork pairs upstream Cemu with [`ax-sdk`](https://github.com/galaxywarriordad/ax-sdk) for deterministic physical-core isolation, PGO builds, and hardware IRQ/VRAM discipline, please review these guidelines before submitting issues or pull requests.
 
-If coding isn't your thing, testing games and making detailed bug reports or updating the (usually outdated) compatibility wiki is also appreciated!
+---
 
-Questions about Cemu's software architecture can also be answered on Discord.
+## ⚖️ Legal & Copyright Policy
 
-#### AI-generated contributions:
+In strict alignment with upstream **Cemu** (`cemu-project/Cemu`):
 
-For new contributors we ask that all code submitted is written and understood by a human. You can use AI for planning, designing, reviewing and for asking questions about the codebase, but the code itself needs to be written by you. As a small exception you can use IntelliSense-style AI code autocompletion for pure boilerplate code as long as it's only a small part of your submission. To further clarify, when we ask for "human written" that excludes letting an AI write the code and then paraphrasing it. In other words, we are asking for human effort.
+* **Original Hardware Required:** You **must own an original Nintendo Wii U console** and dump your own system files, cryptographic keys (`otp.bin`, `seeprom.bin`, `keys.txt`), and legally purchased games directly from your own hardware.
+* **Zero Piracy Tolerance:** Any issue, pull request, commit, or log attachment referencing or containing copyrighted Nintendo Wii U firmware, title keys, WUD/WUX/WUA/RPX dumps, or proprietary third-party binaries (`Lossless.dll`) will be closed immediately.
 
-Why this policy exists:
+---
 
-We have relatively low reviewing capacity and requiring human-written code increases the quality and trustworthiness of submitted pull requests. There are also general concerns with AI usage in emulation:
-- LLMs tend to make up solutions that work on the surface but are generally not accurate in the emulation sense
-- There is evidence that LLMs have been trained on leaked proprietary SDKs and we cannot verify the origin of the knowledge. This is especially a problem for core emulation logic
+## 🛠️ Engineering & Code Standards
 
-Please keep these points in mind when contributing to Cemu. Contributions that do not follow this policy may be rejected.
+1. **Shared Silicon Core (`ax-sdk`):**
+   * Keep generic CPU topology detection (`ax::topology`), HugeTLB/Large-Page fastmem (`ax::memory`), and lock-free audio primitives (`ax::audio`) inside [`ax-sdk`](https://github.com/galaxywarriordad/ax-sdk) rather than duplicating platform shims inside Cemu.
+2. **Win32 Header & Compiler Hygiene:**
+   * Define `NOMINMAX` and `WIN32_LEAN_AND_MEAN` before including `<windows.h>` and avoid macro collisions with Cemu's HLE subsystems.
+3. **Real-Time Core & Audio Safety:**
+   * Never block or allocate heap memory on **Core 0 (`0x01`, Audio / MMCSS)** or **Core 1 (`0x02`, Vulkan Command Submission)**. Keep background shader compilation and texture decompression quarantined on **Core 5 (`0x20`)**.
+4. **License Compatibility (`MPL-2.0`):**
+   * Upstream Cemu source files are licensed under **Mozilla Public License 2.0 (`MPL-2.0`)**; new Cemu subsystem files must carry standard MPL-2.0 headers while linking cleanly against MIT-licensed `ax::core`.
+
+---
+
+## 🐛 Submitting Bug Reports & Telemetry
+
+When opening an issue on **`galaxywarriordad/Cemu-Latte-AX`**, please include:
+
+1. **Edition & OS:** Specify whether you are running the **Windows 10/11 PGO Edition** or the **Batocera (`Piccolo [AX]`) Edition**.
+2. **Hardware Topology:** CPU model (SMT/CCX layout), discrete GPU + driver version, Intel iGPU model, and USB DAC model.
+3. **Logs & Graphics Packs:** Attach Cemu's `log.txt` and note active graphic packs or `ax-sdk` core affinity masks.
