@@ -265,16 +265,24 @@ option(ENABLE_AX_SDK "Enable Silicon Preservation Society [AX] deterministic run
 if(ENABLE_AX_SDK)
 	find_package(ax-sdk QUIET)
 	if(NOT TARGET ax::core)
+		if(NOT DEFINED FETCHCONTENT_SOURCE_DIR_AX_SDK)
+			if(DEFINED ENV{AX_SDK_DIR} AND EXISTS "$ENV{AX_SDK_DIR}/CMakeLists.txt")
+				set(FETCHCONTENT_SOURCE_DIR_AX_SDK "$ENV{AX_SDK_DIR}" CACHE PATH "" FORCE)
+			elseif(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../ax-sdk/CMakeLists.txt")
+				set(FETCHCONTENT_SOURCE_DIR_AX_SDK "${CMAKE_CURRENT_SOURCE_DIR}/../ax-sdk" CACHE PATH "" FORCE)
+			endif()
+		endif()
 		include(FetchContent)
 		FetchContent_Declare(
 			ax_sdk
-			GIT_REPOSITORY https://github.com
-			GIT_TAG        main
-			GIT_SHALLOW    TRUE
+			GIT_REPOSITORY https://github.com/galaxywarriordad/ax-sdk.git
+			GIT_TAG        v1_36
+			GIT_SHALLOW    FALSE
 		)
 		FetchContent_MakeAvailable(ax_sdk)
 	endif()
 	add_compile_definitions(CEMU_ENABLE_AX_SDK=1)
 endif()
+
 
 add_subdirectory(src)
