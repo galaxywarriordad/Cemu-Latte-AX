@@ -276,7 +276,7 @@ if(ENABLE_AX_SDK)
 		FetchContent_Declare(
 			ax_sdk
 			GIT_REPOSITORY https://github.com/galaxywarriordad/ax-sdk.git
-			GIT_TAG        v1_36
+			GIT_TAG        v1_36_1
 			GIT_SHALLOW    FALSE
 		)
 		FetchContent_MakeAvailable(ax_sdk)
