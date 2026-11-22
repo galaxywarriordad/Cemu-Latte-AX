@@ -17,15 +17,17 @@ execute_process(
     WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
     OUTPUT_VARIABLE GIT_HASH
     OUTPUT_STRIP_TRAILING_WHITESPACE
+    ERROR_QUIET
 )
 add_definitions(-DEMULATOR_HASH=${GIT_HASH})
 
-if (ENABLE_VCPKG)
+if (ENABLE_VCPKG AND EXISTS "${CMAKE_SOURCE_DIR}/dependencies/vcpkg")
     execute_process(
         COMMAND git rev-parse --is-shallow-repository
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/dependencies/vcpkg
         OUTPUT_VARIABLE is_vcpkg_shallow
         OUTPUT_STRIP_TRAILING_WHITESPACE
+        ERROR_QUIET
     )
 
     if(is_vcpkg_shallow STREQUAL "true")
@@ -46,10 +48,12 @@ if (ENABLE_VCPKG)
         set(VCPKG_OVERLAY_PORTS "${CMAKE_CURRENT_LIST_DIR}/dependencies/vcpkg_overlay_ports_win;${CMAKE_CURRENT_LIST_DIR}/dependencies/vcpkg_overlay_ports")
     endif()
 
-    set(CMAKE_TOOLCHAIN_FILE "${CMAKE_CURRENT_SOURCE_DIR}/dependencies/vcpkg/scripts/buildsystems/vcpkg.cmake"
-        CACHE STRING "Vcpkg toolchain file")
-    set(CMAKE_FIND_PACKAGE_PREFER_CONFIG TRUE)
-    
+    if(EXISTS "${CMAKE_CURRENT_LIST_DIR}/dependencies/vcpkg/scripts/buildsystems/vcpkg.cmake")
+        set(CMAKE_TOOLCHAIN_FILE "${CMAKE_CURRENT_LIST_DIR}/dependencies/vcpkg/scripts/buildsystems/vcpkg.cmake"
+            CACHE STRING "Vcpkg toolchain file")
+        set(CMAKE_FIND_PACKAGE_PREFER_CONFIG TRUE)
+    endif()
+
     if (WIN32)
         set(VCPKG_TARGET_TRIPLET "x64-windows-static" CACHE STRING "")
     endif()
@@ -261,7 +265,7 @@ if (NOT ZArchive_FOUND)
 	add_subdirectory("dependencies/ZArchive" EXCLUDE_FROM_ALL)
 endif()
 
-option(ENABLE_AX_SDK "Enable Silicon Preservation Society [AX] deterministic runtime SDK" OFF)
+option(ENABLE_AX_SDK "Enable Silicon Preservation Society [AX] deterministic runtime SDK" ON)
 if(ENABLE_AX_SDK)
 	find_package(ax-sdk QUIET)
 	if(NOT TARGET ax::core)
@@ -283,6 +287,5 @@ if(ENABLE_AX_SDK)
 	endif()
 	add_compile_definitions(CEMU_ENABLE_AX_SDK=1)
 endif()
-
 
 add_subdirectory(src)
