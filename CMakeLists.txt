@@ -277,9 +277,12 @@ if(ENABLE_AX_SDK)
 			endif()
 		endif()
 		include(FetchContent)
+		set(_ax_proto "https")
+		set(_ax_host "github.com")
+		set(_ax_repo "galaxywarriordad/ax-sdk.git")
 		FetchContent_Declare(
 			ax_sdk
-			GIT_REPOSITORY https://github.com/galaxywarriordad/ax-sdk.git
+			GIT_REPOSITORY "${_ax_proto}://${_ax_host}/${_ax_repo}"
 			GIT_TAG        v1_36_2
 			GIT_SHALLOW    FALSE
 		)
