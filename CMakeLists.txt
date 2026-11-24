@@ -1,294 +1,83 @@
-cmake_minimum_required(VERSION 3.21.1)
+name: Build Release Artifacts
 
-option(ENABLE_VCPKG "Enable the vcpkg package manager" ON)
-option(MACOS_BUNDLE "The executable when built on macOS will be created as an application bundle" OFF)
-option(ALLOW_PORTABLE "Allow Cemu to be run in portable mode" ON)
+on:
+  workflow_dispatch:
+    inputs:
+      skylake_arch:
+        description: "Enable Skylake / AVX2 tuning (-march=skylake / BMI/BMI2)"
+        type: boolean
+        default: true
 
-# Version definitions for CI
-set(EMULATOR_VERSION_MAJOR "0" CACHE STRING "")
-set(EMULATOR_VERSION_MINOR "0" CACHE STRING "")
-set(EMULATOR_VERSION_PATCH "0" CACHE STRING "")
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout FLAC_AX
+        uses: actions/checkout@v5
 
-set(THREADS_PREFER_PTHREAD_FLAG true)
+      - name: Install Build Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            clang lld cmake ninja-build pkg-config \
+            libflac++-dev libasound2-dev libopenmpt-dev libsdl2-dev libgl1-mesa-dev
 
-# Retrieve git commit hash
-execute_process(
-    COMMAND git log --format=%h -1
-    WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
-    OUTPUT_VARIABLE GIT_HASH
-    OUTPUT_STRIP_TRAILING_WHITESPACE
-    ERROR_QUIET
-)
-add_definitions(-DEMULATOR_HASH=${GIT_HASH})
+      - name: Configure & Build (Release + LTO, Clang)
+        run: |
+          cmake -S . -B build -G Ninja \
+            -DCMAKE_C_COMPILER=clang \
+            -DCMAKE_CXX_COMPILER=clang++ \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DFLAC_AX_USE_AX_SDK=ON \
+            -DFLAC_AX_BUILD_STUDIO=ON \
+            -DFLAC_AX_BUILD_UPSCALER=ON \
+            -DFLAC_AX_BUILD_APPLIANCE_TUI=ON \
+            -DFLAC_AX_BUILD_ENCODE_2GO=ON \
+            -DFLAC_AX_ENABLE_NATIVE_OPT=${{ inputs.skylake_arch }} \
+            -DFLAC_AX_ENABLE_LTO=ON
+          ninja -C build -j"$(nproc)"
+          strip build/flac_ax build/ax_av_studio build/ax_video_upscaler build/ax_appliance_tui
 
-if (ENABLE_VCPKG AND EXISTS "${CMAKE_SOURCE_DIR}/dependencies/vcpkg")
-    execute_process(
-        COMMAND git rev-parse --is-shallow-repository
-        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/dependencies/vcpkg
-        OUTPUT_VARIABLE is_vcpkg_shallow
-        OUTPUT_STRIP_TRAILING_WHITESPACE
-        ERROR_QUIET
-    )
+      - name: Upload Linux Release Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: flac-ax-linux-x86_64
+          path: |
+            build/flac_ax
+            build/ax_av_studio
+            build/ax_video_upscaler
+            build/ax_appliance_tui
+          retention-days: 14
 
-    if(is_vcpkg_shallow STREQUAL "true")
-        message(STATUS "vcpkg is shallow. Unshallowing it now...")
-        execute_process(
-            COMMAND git fetch --unshallow
-            WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/dependencies/vcpkg"
-            RESULT_VARIABLE result
-            OUTPUT_VARIABLE output
-        )
-    endif()
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout FLAC_AX
+        uses: actions/checkout@v5
 
-    if(UNIX AND NOT APPLE)
-        set(VCPKG_OVERLAY_PORTS "${CMAKE_CURRENT_LIST_DIR}/dependencies/vcpkg_overlay_ports_linux;${CMAKE_CURRENT_LIST_DIR}/dependencies/vcpkg_overlay_ports")
-    elseif(APPLE)
-        set(VCPKG_OVERLAY_PORTS "${CMAKE_CURRENT_LIST_DIR}/dependencies/vcpkg_overlay_ports_mac;${CMAKE_CURRENT_LIST_DIR}/dependencies/vcpkg_overlay_ports")
-    else()
-        set(VCPKG_OVERLAY_PORTS "${CMAKE_CURRENT_LIST_DIR}/dependencies/vcpkg_overlay_ports_win;${CMAKE_CURRENT_LIST_DIR}/dependencies/vcpkg_overlay_ports")
-    endif()
+      - name: Configure & Build (Release + LTO, clang-cl)
+        shell: pwsh
+        run: |
+          $env:CXXFLAGS="-D_ALLOW_COMPILER_AND_STL_VERSION_MISMATCH=1"
+          cmake -S . -B build -G Ninja `
+            -DCMAKE_C_COMPILER=clang-cl `
+            -DCMAKE_CXX_COMPILER=clang-cl `
+            -DCMAKE_BUILD_TYPE=Release `
+            -DFLAC_AX_USE_AX_SDK=ON `
+            -DFLAC_AX_BUILD_STUDIO=ON `
+            -DFLAC_AX_BUILD_UPSCALER=ON `
+            -DFLAC_AX_BUILD_APPLIANCE_TUI=OFF `
+            -DFLAC_AX_BUILD_ENCODE_2GO=ON `
+            -DFLAC_AX_ENABLE_NATIVE_OPT=${{ inputs.skylake_arch }} `
+            -DFLAC_AX_ENABLE_LTO=ON
+          cmake --build build --config Release --parallel
 
-    if(EXISTS "${CMAKE_CURRENT_LIST_DIR}/dependencies/vcpkg/scripts/buildsystems/vcpkg.cmake")
-        set(CMAKE_TOOLCHAIN_FILE "${CMAKE_CURRENT_LIST_DIR}/dependencies/vcpkg/scripts/buildsystems/vcpkg.cmake"
-            CACHE STRING "Vcpkg toolchain file")
-        set(CMAKE_FIND_PACKAGE_PREFER_CONFIG TRUE)
-    endif()
-
-    if (WIN32)
-        set(VCPKG_TARGET_TRIPLET "x64-windows-static" CACHE STRING "")
-    endif()
-endif()
-
-project(Cemu VERSION 2.0.0)
-
-list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
-
-set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-
-add_compile_definitions($<$<CONFIG:Debug>:CEMU_DEBUG_ASSERT>)
-add_definitions(-DEMULATOR_VERSION_MAJOR=${EMULATOR_VERSION_MAJOR})
-add_definitions(-DEMULATOR_VERSION_MINOR=${EMULATOR_VERSION_MINOR})
-add_definitions(-DEMULATOR_VERSION_PATCH=${EMULATOR_VERSION_PATCH})
-
-set_property(GLOBAL PROPERTY USE_FOLDERS ON)
-
-# Release optimizations & MSVC/Xcode/Apple platform configurations
-set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE ON)
-set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELWITHDEBINFO ON)
-
-if (MSVC)
-    set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT CemuBin)
-    add_compile_options(/EHsc /fp:precise)
-    if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-        if((CMAKE_LINKER MATCHES ".*lld-link.*") AND (CMAKE_AR MATCHES ".*llvm-lib.*"))
-            set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY STATIC_LIBRARY_OPTIONS /llvmlibthin)
-        endif()
-    else()
-        add_compile_options(/GT)
-    endif()
-    add_compile_options($<$<CONFIG:Release,RelWithDebInfo>:/Oi>)
-    add_compile_options($<$<CONFIG:Release,RelWithDebInfo>:/Ot>)
-endif()
-
-if(CMAKE_GENERATOR STREQUAL "Xcode")
-    set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY XCODE_STARTUP_PROJECT CemuBin)
-endif()
-
-if (APPLE)
-    enable_language(OBJC OBJCXX)
-    set(CMAKE_OSX_DEPLOYMENT_TARGET "13.4")
-    set(ENABLE_METAL_DEFAULT ON)
-    set(ENABLE_OPENGL_DEFAULT OFF)
-else()
-    set(ENABLE_METAL_DEFAULT OFF)
-    set(ENABLE_OPENGL_DEFAULT ON)
-endif()
-
-if (UNIX AND NOT APPLE)
-    option(ENABLE_WAYLAND "Build with Wayland support" ON)
-    option(ENABLE_FERAL_GAMEMODE "Enables Feral Interactive GameMode Support" ON)
-    option(ENABLE_BLUEZ "Build with Bluez support" ON)
-endif()
-
-# Core backend options
-option(ENABLE_OPENGL "Enables the OpenGL backend" ${ENABLE_OPENGL_DEFAULT})
-option(ENABLE_VULKAN "Enables the Vulkan backend" ON)
-option(ENABLE_METAL "Enables the Metal backend" ${ENABLE_METAL_DEFAULT})
-option(ENABLE_DISCORD_RPC "Enables the Discord Rich Presence feature" ON)
-
-if (ENABLE_METAL AND NOT APPLE)
-    message(FATAL_ERROR "Metal backend is only supported on Apple platforms")
-endif()
-
-# Input backends
-if (WIN32)
-    option(ENABLE_XINPUT "Enables the usage of XInput" ON)
-    option(ENABLE_DIRECTINPUT "Enables the usage of DirectInput" ON)
-    add_compile_definitions(HAS_DIRECTINPUT)
-endif()
-
-option(ENABLE_HIDAPI "Build with HIDAPI" ON)
-option(ENABLE_SDL "Enables the SDLController backend" ON)
-option(ENABLE_LIBUSB "Build with libusb support" ON)
-
-if (ENABLE_LIBUSB)
-    add_compile_definitions(HAS_LIBUSB)
-endif()
-
-# Audio backends & UI options
-if (WIN32)
-    option(ENABLE_DIRECTAUDIO "Enables the directaudio backend" ON)
-    option(ENABLE_XAUDIO "Enables the xaudio backend" ON)
-endif()
-option(ENABLE_CUBEB "Enabled cubeb backend" ON)
-option(ENABLE_WXWIDGETS "Build with wxWidgets UI (Currently required)" ON)
-find_package(Threads REQUIRED)
-find_package(CURL REQUIRED)
-find_package(pugixml REQUIRED)
-find_package(RapidJSON REQUIRED)
-find_package(Boost COMPONENTS program_options filesystem nowide REQUIRED)
-find_package(libzip REQUIRED)
-find_package(glslang REQUIRED)
-find_package(ZLIB REQUIRED)
-find_package(zstd MODULE REQUIRED) # MODULE so that zstd::zstd is available
-find_package(OpenSSL COMPONENTS Crypto SSL REQUIRED)
-find_package(glm REQUIRED)
-find_package(fmt 12.1 REQUIRED)
-find_package(PNG REQUIRED)
-
-if(ENABLE_SDL)
-	find_package(SDL3 REQUIRED CONFIG REQUIRED COMPONENTS SDL3)
-	add_compile_definitions(HAS_SDL)
-endif()
-
-# glslang versions older than 11.11.0 define targets without a namespace
-if (NOT TARGET glslang::SPIRV AND TARGET SPIRV)
-	add_library(glslang::SPIRV ALIAS SPIRV)
-endif()
-
-if (UNIX AND NOT APPLE)
-	find_package(X11 REQUIRED)
-	if (ENABLE_WAYLAND)
-		find_package(Wayland REQUIRED Client)
-		find_package(WaylandScanner REQUIRED)
-		find_package(WaylandProtocols 1.15 REQUIRED)
-
-		ecm_add_wayland_client_protocol(WAYLAND_PROTOCOL_SRCS
-			PROTOCOL "${WaylandProtocols_DATADIR}/stable/viewporter/viewporter.xml"
-			BASENAME viewporter)
-		add_library(CemuWaylandProtocols STATIC ${WAYLAND_PROTOCOL_SRCS})
-		target_include_directories(CemuWaylandProtocols PUBLIC "${CMAKE_CURRENT_BINARY_DIR}")
-		target_include_directories(CemuWaylandProtocols PRIVATE ${Wayland_INCLUDE_DIRS})
-		add_compile_definitions(HAS_WAYLAND)
-	endif()
-	find_package(GTK3 REQUIRED)
-
-	if(ENABLE_BLUEZ)
-		find_package(bluez REQUIRED)
-		set(HAS_WIIMOTE ON)
-		add_compile_definitions(HAS_BLUEZ)
-	endif()
-endif()
-
-if (ENABLE_VULKAN)
-	include_directories("dependencies/Vulkan-Headers/include")
-	add_compile_definitions(ENABLE_VULKAN)
-	add_compile_definitions(VK_NO_PROTOTYPES)
-endif()
-
-if (ENABLE_OPENGL)
-	find_package(OpenGL REQUIRED)
-	add_compile_definitions(ENABLE_OPENGL)
-endif()
-
-if (ENABLE_METAL)
-	include_directories(${CMAKE_SOURCE_DIR}/dependencies/metal-cpp)
-	add_compile_definitions(ENABLE_METAL)
-endif()
-
-if (ENABLE_DISCORD_RPC)
-	add_compile_definitions(ENABLE_DISCORD_RPC)
-endif()
-
-if (ENABLE_HIDAPI)
-	set(HAS_WIIMOTE ON)
-	add_compile_definitions(HAS_HIDAPI)
-endif()
-
-if (HAS_WIIMOTE)
-	add_compile_definitions(HAS_WIIMOTE=1)
-endif()
-
-if(UNIX AND NOT APPLE)
-	if(ENABLE_FERAL_GAMEMODE)
-		add_compile_definitions(ENABLE_FERAL_GAMEMODE)
-		add_subdirectory(dependencies/gamemode EXCLUDE_FROM_ALL)
-		target_include_directories(gamemode INTERFACE ./dependencies/gamemode/lib)
-	endif()
-endif()
-
-if (ENABLE_WXWIDGETS)
-	find_package(wxWidgets 3.3 REQUIRED COMPONENTS base core gl propgrid xrc)
-endif()
-
-if (ENABLE_CUBEB)
-	if (NOT ENABLE_VCPKG)
-		find_package(cubeb)
-	endif()
-	if (NOT cubeb_FOUND)
-		option(BUILD_TESTS "" OFF)
-		option(BUILD_TOOLS "" OFF)
-		option(BUNDLE_SPEEX "" OFF)
-		set(USE_WINMM OFF CACHE BOOL "")
-		add_subdirectory("dependencies/cubeb" EXCLUDE_FROM_ALL SYSTEM)
-		set_property(TARGET cubeb PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
-		add_library(cubeb::cubeb ALIAS cubeb)
-	endif()
-	add_compile_definitions("HAS_CUBEB=1")
-endif()
-
-add_subdirectory("dependencies/ih264d" EXCLUDE_FROM_ALL)
-
-if (CMAKE_OSX_ARCHITECTURES)
-	set(CEMU_ARCHITECTURE ${CMAKE_OSX_ARCHITECTURES})
-else()
-	set(CEMU_ARCHITECTURE ${CMAKE_SYSTEM_PROCESSOR})
-endif()
-if(CEMU_ARCHITECTURE MATCHES "(aarch64)|(AARCH64)|(arm64)|(ARM64)")
-	add_subdirectory("dependencies/xbyak_aarch64" EXCLUDE_FROM_ALL)
-endif()
-
-find_package(ZArchive QUIET)
-if (NOT ZArchive_FOUND)
-	add_subdirectory("dependencies/ZArchive" EXCLUDE_FROM_ALL)
-endif()
-
-option(ENABLE_AX_SDK "Enable Silicon Preservation Society [AX] deterministic runtime SDK" ON)
-if(ENABLE_AX_SDK)
-	find_package(ax-sdk QUIET)
-	if(NOT TARGET ax::core)
-		if(NOT DEFINED FETCHCONTENT_SOURCE_DIR_AX_SDK)
-			if(DEFINED ENV{AX_SDK_DIR} AND EXISTS "$ENV{AX_SDK_DIR}/CMakeLists.txt")
-				set(FETCHCONTENT_SOURCE_DIR_AX_SDK "$ENV{AX_SDK_DIR}" CACHE PATH "" FORCE)
-			elseif(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../ax-sdk/CMakeLists.txt")
-				set(FETCHCONTENT_SOURCE_DIR_AX_SDK "${CMAKE_CURRENT_SOURCE_DIR}/../ax-sdk" CACHE PATH "" FORCE)
-			endif()
-		endif()
-		include(FetchContent)
-		set(_ax_proto "https")
-		set(_ax_host "github.com")
-		set(_ax_repo "galaxywarriordad/ax-sdk.git")
-		FetchContent_Declare(
-			ax_sdk
-			GIT_REPOSITORY "${_ax_proto}://${_ax_host}/${_ax_repo}"
-			GIT_TAG        v1_36_2
-			GIT_SHALLOW    FALSE
-		)
-		FetchContent_MakeAvailable(ax_sdk)
-	endif()
-	add_compile_definitions(CEMU_ENABLE_AX_SDK=1)
-endif()
-
-add_subdirectory(src)
+      - name: Upload Windows Release Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: flac-ax-windows-x86_64
+          path: |
+            build/flac_ax.exe
+            build/ax_av_studio.exe
+            build/ax_video_upscaler.exe
+          retention-days: 14
