@@ -43,7 +43,7 @@ jobs:
       - name: Bootstrap vcpkg
         run: bash ./dependencies/vcpkg/bootstrap-vcpkg.sh
 
-      - name: Configure & Build Cemu Latte [AX] (Linux)
+      - name: Configure & Build Cemu Latte [AX] (Linux, Clang)
         run: |
           cmake -S . -B build -G Ninja \
             -DCMAKE_BUILD_TYPE=${{ inputs.build_type }} \
@@ -73,9 +73,13 @@ jobs:
       - name: Bootstrap vcpkg
         run: ./dependencies/vcpkg/bootstrap-vcpkg.bat
 
-      - name: Configure & Build Cemu Latte [AX] (Windows)
+      - name: Configure & Build Cemu Latte [AX] (Windows, clang-cl)
+        shell: pwsh
         run: |
-          cmake -S . -B build `
+          $env:CXXFLAGS="-D_ALLOW_COMPILER_AND_STL_VERSION_MISMATCH=1"
+          cmake -S . -B build -G Ninja `
+            -DCMAKE_C_COMPILER=clang-cl `
+            -DCMAKE_CXX_COMPILER=clang-cl `
             -DCMAKE_BUILD_TYPE=${{ inputs.build_type }} `
             -DENABLE_AX_SDK=ON `
             -DENABLE_VCPKG=ON `
